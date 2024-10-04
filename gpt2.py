@@ -284,11 +284,11 @@ def optim_step():
     scheduler.step()
 
 @torch.compile(mode="max-autotune", disable=disable_compilation)
-def training_step(x, y,):
+def training_step(x, y, grad_accum_steps):
     optimizer.zero_grad()
     with torch.autocast(device_type=device, dtype=torch.bfloat16):
         logits, loss = model(x, y)
-    loss = loss/grad_accum_steps
+    loss = loss / grad_accum_steps # Make sure the MSE is computed as a mean over the whole batch
     loss.backward()
     norm = torch.nn.utils.clip_grad_norm_(parameters=model.parameters(),
                                           max_norm=1.0,
@@ -313,9 +313,9 @@ for step in range(max_steps):
         x, y = x.to(device), y.to(device)
         
 
-        loss, norm = training_step(x, y,)
+        loss, norm = training_step(x, y, grad_accum_steps)
         total_loss += loss.detach().cpu()
-    loss = total_loss.item()/grad_accum_steps
+    loss = total_loss.item()
     optim_step()
     torch.cuda.synchronize() # Necessary to measure time accurately. Otherwise, the time will be taken asynchronously before the end of the training step on GPU.
     t1 = time.perf_counter()
