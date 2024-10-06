@@ -10,7 +10,7 @@ import os
 from datasets import load_dataset
 """Ideas:
 - Only warmup attention"""
-disable_compilation = False
+disable_compilation = True
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -26,7 +26,6 @@ class GPTConfig:
     n_layer: int = 12
     n_head: int = 12
     n_embd: int = 768
-
 
 class CausalSelfAttention(nn.Module):
     def __init__(self, config):
@@ -55,7 +54,6 @@ class CausalSelfAttention(nn.Module):
         y = self.c_proj(y)
         return y
     
-
 class MLP(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -237,13 +235,14 @@ model = GPT(GPTConfig(vocab_size=50304, block_size=1024))
 
 model.to(device)
 model.train()
+#print(f"cuda memory used after creating model: {torch.cuda.memory_allocated()}")
 optimizer = model.configure_optimizers(weight_decay=0.1, learning_rate=6e-4)
 torch.set_float32_matmul_precision("high")
 
-total_batch_size = 512000 # 25*20*1024, where 20 is the batch size for each step, 1024 is the sequence length for each batch, and 25 will be the number of accumulation steps
+# total_batch_size = 512000 # 25*20*1024, where 20 is the batch size for each step, 1024 is the sequence length for each batch, and 25 will be the number of accumulation steps
+total_batch_size = 524288
 
-
-B = 20
+B = 16
 T = 1024
 assert total_batch_size % (B * T) == 0
 grad_accum_steps = total_batch_size // (B * T)
@@ -285,7 +284,6 @@ def optim_step():
 
 @torch.compile(mode="max-autotune", disable=disable_compilation)
 def training_step(x, y, grad_accum_steps):
-    optimizer.zero_grad()
     with torch.autocast(device_type=device, dtype=torch.bfloat16):
         logits, loss = model(x, y)
     loss = loss / grad_accum_steps # Make sure the MSE is computed as a mean over the whole batch
@@ -308,6 +306,7 @@ mean = 0
 for step in range(max_steps):
     t0 = time.perf_counter()
     total_loss = torch.tensor(0.0)
+    optimizer.zero_grad()
     for mini_step in range(grad_accum_steps):
         x, y = train_loader.next_batch()
         x, y = x.to(device), y.to(device)

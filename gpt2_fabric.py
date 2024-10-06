@@ -7,22 +7,37 @@ import math
 import time
 import os
 import logging
-
+import argparse
 # additional imports from PyTorch and Lightning
 import lightning as L
 from torch.utils.data import IterableDataset, DataLoader
 
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
-disable_compilation=True
-pin_memory=False
+disable_compilation=False
+
+
+# Set up argument parser
+parser = argparse.ArgumentParser(description="A script to demonstrate logging level control.")
+parser.add_argument('--log', default='info', choices=['debug', 'info', 'warning', 'error', 'critical'],
+                    help="Set the logging level (default: info)")
+
+# Parse arguments
+args = parser.parse_args()
+
+# Set logging level based on user input
+log_level = getattr(logging, args.log.upper(), logging.INFO)
+logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def load_tokens(filename):
     npt = np.load(filename)
     ptt = torch.tensor(npt, dtype=torch.long)
     return ptt
-
-
 
 # Try to create a dataset class that will output any given token.
 class GPTDataset(IterableDataset):
@@ -45,11 +60,9 @@ class GPTDataset(IterableDataset):
             current_position = 0
             while current_position + self.B * self.T + 1 < len(tokens):
                 buf = tokens[current_position:current_position + self.B * self.T + 1]
-                x = buf[:-1].view(self.B, self.T)
-                y = buf[1:].view(self.B, self.T)
                 current_position += self.B * self.T
-                logging.debug(f"Dataset yielding x shape {x.shape}, y shape {y.shape}")
-                yield x, y
+                yield buf
+
 
 @dataclass
 class GPTConfig:
@@ -184,32 +197,44 @@ class GPT(nn.Module):
 logging.info("Check if pinning the memory is OK.")
 logging.debug("""Choosing batch_size=None should allow us to not add a batching dimension to
                 the data, which is already batched in the dataset.""")
-#train_dataloader = DataLoader(GPTDataset(20, 1024, "train"), batch_size=None, shuffle=False, pin_memory=pin_memory, pin_memory_device=device)
-train_dataloader = DataLoader(GPTDataset(20, 1024, "train"), batch_size=None, shuffle=False)
 
-val_dataloader = DataLoader(GPTDataset(20, 1024, "val"), batch_size=None, shuffle=False)
-logging.debug("testing dataloader output shapes")
-x, y = next(iter(train_dataloader))
-logging.debug(f"obtained x shape {x.shape}, y shape {y.shape}")
-model = GPT(GPTConfig(vocab_size=50304, block_size=1024))
-
-model.to(device)
-model.train()
-optimizer = model.configure_optimizers(weight_decay=0.1,
-                                       learning_rate=6e-4)
-torch.set_float32_matmul_precision("high")
-
-total_batch_size = 524288
 B = 16
+if B == 20:
+    total_batch_size = 512000
+elif B == 16:
+    total_batch_size = 524288
+elif B == 24:
+    total_batch_size = 589824
+else:
+    raise ValueError("Batch size not supported")
 T = 1024
 assert total_batch_size % (B * T) == 0
 grad_accum_steps = total_batch_size // (B * T)
 
+
+# When using the commented dataloader instead of the uncommented train_dataloader, the performance drops to the level of uncompiled code.
+train_dataloader = DataLoader(GPTDataset(B, T, "train"),
+                              batch_size=None,
+                              shuffle=False,
+                              pin_memory=True,
+                              pin_memory_device="cuda:0")
+
+# train_dataloader = DataLoader(GPTDataset(B, 1024, "train"), batch_size=None, shuffle=False)
+
+# val_dataloader = DataLoader(GPTDataset(B, 1024, "val"), batch_size=None, shuffle=False)
+model = GPT(GPTConfig(vocab_size=50304, block_size=1024))
+
+model.to(device)
+model.train()
+logging.info(f"used cuda memory after creating model: {torch.cuda.memory_allocated()}")
+optimizer = model.configure_optimizers(weight_decay=0.1,
+                                       learning_rate=6e-4)
+torch.set_float32_matmul_precision("high")
+
+
+
 logging.info(f"total desired batch size: {total_batch_size}")
 logging.info(f"=> computed gradient accumulation steps {grad_accum_steps}")
-
-# Don't use the val loader for now
-# val_loader = DataLoader(GPTDataset(B, T, "val"), batch_size=1, shuffle=False)
 
 max_coefficient = 1.0 # Multiplicative coefficient for the learning rate schedule
 min_coefficient = max_coefficient  * 0.1
@@ -231,12 +256,15 @@ def get_scheduler(max_coefficient, min_coefficient, warmup_steps, max_steps):
 def optim_step():
     optimizer.step()
     scheduler.step()
+    optimizer.zero_grad()
+
 @torch.compile(mode="max-autotune", disable=disable_compilation)
 def training_step(x, y):
     optimizer.zero_grad()
     with torch.autocast(device_type = device, dtype=torch.bfloat16):
         logits, loss = model(x, y)
     loss = loss / grad_accum_steps
+    loss.backward()
     norm = torch.nn.utils.clip_grad_norm_(model.parameters(),
                                           max_norm =1.0,
                                           error_if_nonfinite=True)
@@ -254,23 +282,23 @@ logging.debug("""Please make sure that we actually want to do a certain number o
 
 num_epochs = 5
 for epoch in range(num_epochs):
-    total_loss = torch.tensor(0.0, device=device)
+    total_loss = torch.tensor(0.0)
     t0 = time.time()
     t1 = time.time()
-    for step, (x, y) in enumerate(train_dataloader):
-        x = x.to(device)
-        y = y.to(device)
+    for step, buf in enumerate(train_dataloader):
+        x = buf[:-1].view(B, T)
+        y = buf[1:].view(B, T)
+        x = x.to(device, non_blocking=True)
+        y = y.to(device, non_blocking=True)
         logging.debug(f"In the training loop, x shape {x.shape}, y shape {y.shape}")
         loss, norm = training_step(x, y)
-        total_loss += loss/grad_accum_steps
+        total_loss += loss.detach().cpu()
         if step % grad_accum_steps == grad_accum_steps - 1:
-            loss.backward()
             optim_step()
             logging.info(f"Epoch {epoch}, step {step}, loss {total_loss.item()}")
-            total_loss = torch.tensor(0.0)
-            optimizer.zero_grad()
             t0 = t1
             t1 = time.time()
             dt = (t1 - t0)
             tokens_per_second = B * T * grad_accum_steps / dt
-            logging.info(f"tokens per second = {tokens_per_second:.0f} | loss: {loss.item():.6f} | gradient norm {norm:.4f} | dt {dt*1000:.6f} ms")
+            logging.info(f"tokens per second = {tokens_per_second:.0f} | loss: {total_loss.item():.6f} | gradient norm {norm:.4f} | dt {dt*1000:.6f} ms")
+            total_loss = torch.tensor(0.0)
