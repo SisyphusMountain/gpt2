@@ -3,31 +3,43 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
+import math
+import time
 import os
+import logging
+
 # additional imports from PyTorch and Lightning
 import lightning as L
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import IterableDataset, DataLoader
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+disable_compilation=True
+pin_memory=False
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def load_tokens(filename):
     npt = np.load(filename)
     ptt = torch.tensor(npt, dtype=torch.long)
     return ptt
 
+
+
 # Try to create a dataset class that will output any given token.
-class GPTDataset(Dataset):
+class GPTDataset(IterableDataset):
     def __init__(self, B, T, split):
         assert split in {"train", "val"}
-        data_root = "edu_fineweb10B"
-        shards = os.listdir(data_root)
+        self.B = B
+        self.T = T
+        self.split = split
+        self.data_root = "edu_fineweb10B"
+        shards = os.listdir(self.data_root)
         shards = [s for s in shards if split in s]
         shards = sorted(shards)
-        shards = [os.path.join(data_root, s) for s in shards]
+        shards = [os.path.join(self.data_root, s) for s in shards]
         self.shards = shards
-        self.current_shard = load_tokens(self.shards[self.current_shard])
-        self.tokens = load_tokens(self.shards[self.current_shard])
         self.current_position = 0
     def __iter__(self):
-        shard_iter = iter(self.tokens)
+        shard_iter = iter(self.shards)
         for shard_path in shard_iter:
             tokens = load_tokens(shard_path)
             current_position = 0
@@ -36,6 +48,7 @@ class GPTDataset(Dataset):
                 x = buf[:-1].view(self.B, self.T)
                 y = buf[1:].view(self.B, self.T)
                 current_position += self.B * self.T
+                logging.debug(f"Dataset yielding x shape {x.shape}, y shape {y.shape}")
                 yield x, y
 
 @dataclass
@@ -114,8 +127,6 @@ class GPT(nn.Module):
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
         self.lm_head.weight = self.transformer.wte.weight # weight sharing
         self.apply(self._init_weights)
-        # TEST: compile the forward method
-        self.forward = torch.compile(self.forward, mode="max-autotune")
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -169,5 +180,97 @@ class GPT(nn.Module):
         else:
             loss = None
         return logits, loss
-    
 
+logging.info("Check if pinning the memory is OK.")
+logging.debug("""Choosing batch_size=None should allow us to not add a batching dimension to
+                the data, which is already batched in the dataset.""")
+#train_dataloader = DataLoader(GPTDataset(20, 1024, "train"), batch_size=None, shuffle=False, pin_memory=pin_memory, pin_memory_device=device)
+train_dataloader = DataLoader(GPTDataset(20, 1024, "train"), batch_size=None, shuffle=False)
+
+val_dataloader = DataLoader(GPTDataset(20, 1024, "val"), batch_size=None, shuffle=False)
+logging.debug("testing dataloader output shapes")
+x, y = next(iter(train_dataloader))
+logging.debug(f"obtained x shape {x.shape}, y shape {y.shape}")
+model = GPT(GPTConfig(vocab_size=50304, block_size=1024))
+
+model.to(device)
+model.train()
+optimizer = model.configure_optimizers(weight_decay=0.1,
+                                       learning_rate=6e-4)
+torch.set_float32_matmul_precision("high")
+
+total_batch_size = 524288
+B = 16
+T = 1024
+assert total_batch_size % (B * T) == 0
+grad_accum_steps = total_batch_size // (B * T)
+
+logging.info(f"total desired batch size: {total_batch_size}")
+logging.info(f"=> computed gradient accumulation steps {grad_accum_steps}")
+
+# Don't use the val loader for now
+# val_loader = DataLoader(GPTDataset(B, T, "val"), batch_size=1, shuffle=False)
+
+max_coefficient = 1.0 # Multiplicative coefficient for the learning rate schedule
+min_coefficient = max_coefficient  * 0.1
+warmup_steps = 715
+max_steps = 19500
+
+def get_scheduler(max_coefficient, min_coefficient, warmup_steps, max_steps):
+    def get_lr(step):
+        if step < warmup_steps:
+            return max_coefficient * (step+1)/(warmup_steps)
+        elif step > max_steps:
+            return min_coefficient
+        else:
+            decay_ratio = (step - warmup_steps)/(max_steps - warmup_steps)
+            coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+            return min_coefficient + coeff * (max_coefficient - min_coefficient)
+    return get_lr
+@torch.compile(disable=disable_compilation)
+def optim_step():
+    optimizer.step()
+    scheduler.step()
+@torch.compile(mode="max-autotune", disable=disable_compilation)
+def training_step(x, y):
+    optimizer.zero_grad()
+    with torch.autocast(device_type = device, dtype=torch.bfloat16):
+        logits, loss = model(x, y)
+    loss = loss / grad_accum_steps
+    norm = torch.nn.utils.clip_grad_norm_(model.parameters(),
+                                          max_norm =1.0,
+                                          error_if_nonfinite=True)
+    logging.debug("maybe the norm error if nonfinite slows down the program")
+    return loss, norm
+
+get_lr = get_scheduler(max_coefficient,
+                       min_coefficient,
+                       warmup_steps,
+                       max_steps)
+scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, get_lr)
+
+logging.debug("""Please make sure that we actually want to do a certain number of steps,
+                rather than a certain number of epochs.""")
+
+num_epochs = 5
+for epoch in range(num_epochs):
+    total_loss = torch.tensor(0.0, device=device)
+    t0 = time.time()
+    t1 = time.time()
+    for step, (x, y) in enumerate(train_dataloader):
+        x = x.to(device)
+        y = y.to(device)
+        logging.debug(f"In the training loop, x shape {x.shape}, y shape {y.shape}")
+        loss, norm = training_step(x, y)
+        total_loss += loss/grad_accum_steps
+        if step % grad_accum_steps == grad_accum_steps - 1:
+            loss.backward()
+            optim_step()
+            logging.info(f"Epoch {epoch}, step {step}, loss {total_loss.item()}")
+            total_loss = torch.tensor(0.0)
+            optimizer.zero_grad()
+            t0 = t1
+            t1 = time.time()
+            dt = (t1 - t0)
+            tokens_per_second = B * T * grad_accum_steps / dt
+            logging.info(f"tokens per second = {tokens_per_second:.0f} | loss: {loss.item():.6f} | gradient norm {norm:.4f} | dt {dt*1000:.6f} ms")
