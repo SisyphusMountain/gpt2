@@ -1,0 +1,13 @@
+{"time":"2024-10-08T13:30:48.742301626+02:00","level":"INFO","msg":"using version","core version":"0.18.3"}
+{"time":"2024-10-08T13:30:48.742312755+02:00","level":"INFO","msg":"created symlink","path":"/home/enzo/Documents/gpt2/wandb/run-20241008_133048-l78ygnxk/logs/debug-core.log"}
+{"time":"2024-10-08T13:30:48.849289348+02:00","level":"ERROR","msg":"dialing: google: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information"}
+{"time":"2024-10-08T13:30:48.853421543+02:00","level":"INFO","msg":"created new stream","id":"l78ygnxk"}
+{"time":"2024-10-08T13:30:48.853442359+02:00","level":"INFO","msg":"stream: started","id":"l78ygnxk"}
+{"time":"2024-10-08T13:30:48.853466361+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"l78ygnxk"}}
+{"time":"2024-10-08T13:30:48.853486406+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"l78ygnxk"}}
+{"time":"2024-10-08T13:30:48.853482035+02:00","level":"INFO","msg":"sender: started","stream_id":{"value":"l78ygnxk"}}
+{"time":"2024-10-08T13:30:49.496825793+02:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2024-10-08T13:30:49.497247036+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-08T13:38:48.696243391+02:00","level":"INFO","msg":"stream: closing","id":"l78ygnxk"}
+{"time":"2024-10-08T13:38:48.696254104+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-08T13:38:48.697025862+02:00","level":"INFO","msg":"Stopped system monitor"}

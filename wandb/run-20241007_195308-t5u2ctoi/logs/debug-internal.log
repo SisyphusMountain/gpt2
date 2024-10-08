@@ -1,0 +1,13 @@
+{"time":"2024-10-07T19:53:08.985643971+02:00","level":"INFO","msg":"using version","core version":"0.18.3"}
+{"time":"2024-10-07T19:53:08.98565613+02:00","level":"INFO","msg":"created symlink","path":"wandb/run-20241007_195308-t5u2ctoi/logs/debug-core.log"}
+{"time":"2024-10-07T19:53:09.08520131+02:00","level":"ERROR","msg":"dialing: google: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information"}
+{"time":"2024-10-07T19:53:09.088448039+02:00","level":"INFO","msg":"created new stream","id":"t5u2ctoi"}
+{"time":"2024-10-07T19:53:09.088466934+02:00","level":"INFO","msg":"stream: started","id":"t5u2ctoi"}
+{"time":"2024-10-07T19:53:09.088484311+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"t5u2ctoi"}}
+{"time":"2024-10-07T19:53:09.088512828+02:00","level":"INFO","msg":"sender: started","stream_id":{"value":"t5u2ctoi"}}
+{"time":"2024-10-07T19:53:09.088540784+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"t5u2ctoi"}}
+{"time":"2024-10-07T19:53:10.002570298+02:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2024-10-07T19:53:10.003030444+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-07T19:58:14.046358829+02:00","level":"INFO","msg":"stream: closing","id":"t5u2ctoi"}
+{"time":"2024-10-07T19:58:14.046375073+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-07T19:58:14.047503416+02:00","level":"INFO","msg":"Stopped system monitor"}

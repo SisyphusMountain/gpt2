@@ -1,0 +1,13 @@
+{"time":"2024-10-08T16:22:38.019140271+02:00","level":"INFO","msg":"using version","core version":"0.18.3"}
+{"time":"2024-10-08T16:22:38.019147464+02:00","level":"INFO","msg":"created symlink","path":"/home/enzo/Documents/gpt2/wandb/run-20241008_162238-x0knetzo/logs/debug-core.log"}
+{"time":"2024-10-08T16:22:38.120579957+02:00","level":"ERROR","msg":"dialing: google: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information"}
+{"time":"2024-10-08T16:22:38.12368086+02:00","level":"INFO","msg":"created new stream","id":"x0knetzo"}
+{"time":"2024-10-08T16:22:38.123698708+02:00","level":"INFO","msg":"stream: started","id":"x0knetzo"}
+{"time":"2024-10-08T16:22:38.123715424+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"x0knetzo"}}
+{"time":"2024-10-08T16:22:38.123730309+02:00","level":"INFO","msg":"sender: started","stream_id":{"value":"x0knetzo"}}
+{"time":"2024-10-08T16:22:38.123750507+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"x0knetzo"}}
+{"time":"2024-10-08T16:22:38.77314117+02:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2024-10-08T16:22:38.77361262+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-08T16:27:27.250972349+02:00","level":"INFO","msg":"stream: closing","id":"x0knetzo"}
+{"time":"2024-10-08T16:27:27.250984876+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-08T16:27:27.252365017+02:00","level":"INFO","msg":"Stopped system monitor"}

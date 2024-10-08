@@ -1,0 +1,10 @@
+{"time":"2024-10-07T22:22:16.934151313+02:00","level":"INFO","msg":"using version","core version":"0.18.3"}
+{"time":"2024-10-07T22:22:16.934163006+02:00","level":"INFO","msg":"created symlink","path":"/home/enzo/Documents/gpt2/wandb/run-20241007_222216-h8put9kl/logs/debug-core.log"}
+{"time":"2024-10-07T22:22:17.064072549+02:00","level":"ERROR","msg":"dialing: google: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information"}
+{"time":"2024-10-07T22:22:17.067495735+02:00","level":"INFO","msg":"created new stream","id":"h8put9kl"}
+{"time":"2024-10-07T22:22:17.067513675+02:00","level":"INFO","msg":"stream: started","id":"h8put9kl"}
+{"time":"2024-10-07T22:22:17.067534054+02:00","level":"INFO","msg":"sender: started","stream_id":{"value":"h8put9kl"}}
+{"time":"2024-10-07T22:22:17.067521242+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"h8put9kl"}}
+{"time":"2024-10-07T22:22:17.067524225+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"h8put9kl"}}
+{"time":"2024-10-07T22:22:17.552603709+02:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2024-10-07T22:22:17.553020432+02:00","level":"INFO","msg":"Starting system monitor"}

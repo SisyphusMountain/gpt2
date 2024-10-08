@@ -1,0 +1,34 @@
+2024-10-08 15:24:35,930 - WARNING - Disabling compilation
+2024-10-08 15:24:36,923 - INFO - used cuda memory after creating model: 552298496
+Number of decayed parameter tensors 50 for a total of 124354560 parameters
+Number of non-decayed parameter tensors 98 for a total of 121344 parameters
+2024-10-08 15:24:37,502 - INFO - total desired batch size: 524288
+2024-10-08 15:24:37,502 - INFO - => computed gradient accumulation steps 32
+2024-10-08 15:24:37,881 - INFO - Saving model
+2024-10-08 15:24:38,423 - INFO - Model saved
+2024-10-08 15:24:39,471 - INFO - Validation loss: 11.461069488525391
+2024-10-08 15:24:40,843 - INFO - Saving model
+2024-10-08 15:24:41,341 - INFO - Model saved
+2024-10-08 15:24:42,391 - INFO - Validation loss: 11.461069488525391
+2024-10-08 15:24:43,280 - INFO - Saving model
+2024-10-08 15:24:43,760 - INFO - Model saved
+2024-10-08 15:24:44,806 - INFO - Validation loss: 11.461069488525391
+2024-10-08 15:24:45,676 - INFO - Saving model
+2024-10-08 15:24:46,212 - INFO - Model saved
+2024-10-08 15:24:47,263 - INFO - Validation loss: 11.461069488525391
+2024-10-08 15:24:47,949 - INFO - Saving model
+2024-10-08 15:24:48,442 - INFO - Model saved
+2024-10-08 15:24:49,489 - INFO - Validation loss: 11.461069488525391
+2024-10-08 15:24:50,183 - INFO - Saving model
+2024-10-08 15:24:50,656 - INFO - Model saved
+2024-10-08 15:24:51,702 - INFO - Validation loss: 11.461069488525391
+2024-10-08 15:24:52,639 - INFO - Saving model
+2024-10-08 15:24:53,119 - INFO - Model saved
+2024-10-08 15:24:54,289 - INFO - Validation loss: 11.461069488525391
+2024-10-08 15:24:54,866 - INFO - Saving model
+2024-10-08 15:24:55,382 - INFO - Model saved
+Traceback (most recent call last):
+  File "/home/enzo/Documents/gpt2/gpt2_fabric.py", line 343, in <module>
+    loss_val += loss.cpu()
+                ^^^^^^^^^^
+KeyboardInterrupt

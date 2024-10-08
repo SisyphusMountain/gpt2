@@ -1,0 +1,13 @@
+{"time":"2024-10-08T16:29:41.274002324+02:00","level":"INFO","msg":"using version","core version":"0.18.3"}
+{"time":"2024-10-08T16:29:41.274009452+02:00","level":"INFO","msg":"created symlink","path":"/home/enzo/Documents/gpt2/wandb/run-20241008_162941-azr36x04/logs/debug-core.log"}
+{"time":"2024-10-08T16:29:41.373224593+02:00","level":"ERROR","msg":"dialing: google: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information"}
+{"time":"2024-10-08T16:29:41.37612902+02:00","level":"INFO","msg":"created new stream","id":"azr36x04"}
+{"time":"2024-10-08T16:29:41.376142349+02:00","level":"INFO","msg":"stream: started","id":"azr36x04"}
+{"time":"2024-10-08T16:29:41.376154377+02:00","level":"INFO","msg":"sender: started","stream_id":{"value":"azr36x04"}}
+{"time":"2024-10-08T16:29:41.376151747+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"azr36x04"}}
+{"time":"2024-10-08T16:29:41.376178972+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"azr36x04"}}
+{"time":"2024-10-08T16:29:41.927376032+02:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2024-10-08T16:29:41.927674649+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-08T16:32:11.89647429+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-08T16:32:11.896458364+02:00","level":"INFO","msg":"stream: closing","id":"azr36x04"}
+{"time":"2024-10-08T16:32:11.898051296+02:00","level":"INFO","msg":"Stopped system monitor"}

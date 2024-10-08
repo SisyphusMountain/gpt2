@@ -1,0 +1,13 @@
+{"time":"2024-10-08T15:25:29.449766703+02:00","level":"INFO","msg":"using version","core version":"0.18.3"}
+{"time":"2024-10-08T15:25:29.449772484+02:00","level":"INFO","msg":"created symlink","path":"/home/enzo/Documents/gpt2/wandb/run-20241008_152529-rbsjkptn/logs/debug-core.log"}
+{"time":"2024-10-08T15:25:29.555439093+02:00","level":"ERROR","msg":"dialing: google: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information"}
+{"time":"2024-10-08T15:25:29.558009713+02:00","level":"INFO","msg":"created new stream","id":"rbsjkptn"}
+{"time":"2024-10-08T15:25:29.558028466+02:00","level":"INFO","msg":"stream: started","id":"rbsjkptn"}
+{"time":"2024-10-08T15:25:29.558036529+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"rbsjkptn"}}
+{"time":"2024-10-08T15:25:29.558047114+02:00","level":"INFO","msg":"sender: started","stream_id":{"value":"rbsjkptn"}}
+{"time":"2024-10-08T15:25:29.558035152+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"rbsjkptn"}}
+{"time":"2024-10-08T15:25:30.17646342+02:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2024-10-08T15:25:30.176766743+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-08T15:26:49.775882995+02:00","level":"INFO","msg":"stream: closing","id":"rbsjkptn"}
+{"time":"2024-10-08T15:26:49.775914815+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-08T15:26:49.777069253+02:00","level":"INFO","msg":"Stopped system monitor"}

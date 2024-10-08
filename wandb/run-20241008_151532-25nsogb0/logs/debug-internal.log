@@ -1,0 +1,18 @@
+{"time":"2024-10-08T15:15:32.133088989+02:00","level":"INFO","msg":"using version","core version":"0.18.3"}
+{"time":"2024-10-08T15:15:32.133095393+02:00","level":"INFO","msg":"created symlink","path":"/home/enzo/Documents/gpt2/wandb/run-20241008_151532-25nsogb0/logs/debug-core.log"}
+{"time":"2024-10-08T15:15:32.221176751+02:00","level":"ERROR","msg":"dialing: google: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information"}
+{"time":"2024-10-08T15:15:32.223841989+02:00","level":"INFO","msg":"created new stream","id":"25nsogb0"}
+{"time":"2024-10-08T15:15:32.223855725+02:00","level":"INFO","msg":"stream: started","id":"25nsogb0"}
+{"time":"2024-10-08T15:15:32.223869315+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"25nsogb0"}}
+{"time":"2024-10-08T15:15:32.223896967+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"25nsogb0"}}
+{"time":"2024-10-08T15:15:32.223923827+02:00","level":"INFO","msg":"sender: started","stream_id":{"value":"25nsogb0"}}
+{"time":"2024-10-08T15:15:32.772025471+02:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2024-10-08T15:15:32.772286673+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-08T15:15:54.065954895+02:00","level":"INFO","msg":"stream: closing","id":"25nsogb0"}
+{"time":"2024-10-08T15:15:54.065967204+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-08T15:15:54.067126491+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-10-08T15:15:55.760192232+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-10-08T15:15:56.221621583+02:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"25nsogb0"}}
+{"time":"2024-10-08T15:15:56.221653466+02:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"25nsogb0"}}
+{"time":"2024-10-08T15:15:56.22164976+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"25nsogb0"}}
+{"time":"2024-10-08T15:15:56.221717423+02:00","level":"INFO","msg":"stream: closed","id":"25nsogb0"}

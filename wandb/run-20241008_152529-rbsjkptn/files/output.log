@@ -1,0 +1,175 @@
+2024-10-08 15:25:30,216 - WARNING - Disabling compilation
+2024-10-08 15:25:31,176 - INFO - used cuda memory after creating model: 552298496
+Number of decayed parameter tensors 50 for a total of 124354560 parameters
+Number of non-decayed parameter tensors 98 for a total of 121344 parameters
+2024-10-08 15:25:31,736 - INFO - total desired batch size: 524288
+2024-10-08 15:25:31,736 - INFO - => computed gradient accumulation steps 32
+2024-10-08 15:25:36,815 - INFO - tokens per second = 103295 | loss: 10.634674 | gradient norm 0.1739 | dt 5075.621367 ms | CUDA memory: 1022.55 MB | CPU memory: 1.98 GB
+2024-10-08 15:25:41,832 - INFO - tokens per second = 104515 | loss: 10.617286 | gradient norm 0.1652 | dt 5016.384363 ms | CUDA memory: 1973.05 MB | CPU memory: 2.05 GB
+2024-10-08 15:25:46,743 - INFO - tokens per second = 106766 | loss: 10.580547 | gradient norm 0.1923 | dt 4910.607576 ms | CUDA memory: 1973.05 MB | CPU memory: 2.05 GB
+2024-10-08 15:25:51,654 - INFO - tokens per second = 106761 | loss: 10.527980 | gradient norm 0.1953 | dt 4910.853624 ms | CUDA memory: 1973.05 MB | CPU memory: 2.05 GB
+2024-10-08 15:25:51,654 - INFO - Saving model
+2024-10-08 15:25:52,181 - INFO - Model saved
+2024-10-08 15:25:53,299 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:25:54,491 - INFO - Saving model
+2024-10-08 15:25:55,007 - INFO - Model saved
+2024-10-08 15:25:56,173 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:25:56,802 - INFO - Saving model
+2024-10-08 15:25:57,277 - INFO - Model saved
+2024-10-08 15:25:58,398 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:25:58,921 - INFO - Saving model
+2024-10-08 15:25:59,407 - INFO - Model saved
+2024-10-08 15:26:00,528 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:01,062 - INFO - Saving model
+2024-10-08 15:26:01,566 - INFO - Model saved
+2024-10-08 15:26:02,697 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:03,638 - INFO - Saving model
+2024-10-08 15:26:04,122 - INFO - Model saved
+2024-10-08 15:26:05,251 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:06,410 - INFO - Saving model
+2024-10-08 15:26:06,902 - INFO - Model saved
+2024-10-08 15:26:08,031 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:08,766 - INFO - Saving model
+2024-10-08 15:26:09,264 - INFO - Model saved
+2024-10-08 15:26:10,385 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:11,623 - INFO - Saving model
+2024-10-08 15:26:12,115 - INFO - Model saved
+2024-10-08 15:26:13,282 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:14,087 - INFO - Saving model
+2024-10-08 15:26:14,572 - INFO - Model saved
+2024-10-08 15:26:15,693 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:16,438 - INFO - Saving model
+2024-10-08 15:26:16,935 - INFO - Model saved
+2024-10-08 15:26:18,057 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:19,200 - INFO - Saving model
+2024-10-08 15:26:19,690 - INFO - Model saved
+2024-10-08 15:26:20,743 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:21,746 - INFO - Saving model
+2024-10-08 15:26:22,228 - INFO - Model saved
+2024-10-08 15:26:23,279 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:24,206 - INFO - Saving model
+2024-10-08 15:26:24,697 - INFO - Model saved
+2024-10-08 15:26:25,790 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:26,468 - INFO - Saving model
+2024-10-08 15:26:26,953 - INFO - Model saved
+2024-10-08 15:26:28,060 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:28,737 - INFO - Saving model
+2024-10-08 15:26:29,236 - INFO - Model saved
+2024-10-08 15:26:30,380 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:30,924 - INFO - Saving model
+2024-10-08 15:26:31,424 - INFO - Model saved
+2024-10-08 15:26:32,475 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:33,445 - INFO - Saving model
+2024-10-08 15:26:33,986 - INFO - Model saved
+2024-10-08 15:26:35,072 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:36,360 - INFO - Saving model
+2024-10-08 15:26:36,861 - INFO - Model saved
+2024-10-08 15:26:37,914 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:38,649 - INFO - Saving model
+2024-10-08 15:26:39,160 - INFO - Model saved
+2024-10-08 15:26:40,222 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:40,902 - INFO - Saving model
+2024-10-08 15:26:41,416 - INFO - Model saved
+2024-10-08 15:26:42,496 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:43,168 - INFO - Saving model
+2024-10-08 15:26:43,661 - INFO - Model saved
+2024-10-08 15:26:44,713 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:45,495 - INFO - Saving model
+2024-10-08 15:26:45,987 - INFO - Model saved
+2024-10-08 15:26:47,161 - INFO - Validation loss: 11.338198852539062
+2024-10-08 15:26:47,764 - INFO - Saving model
+2024-10-08 15:26:48,256 - INFO - Model saved
+2024-10-08 15:26:49,390 - INFO - Validation loss: 11.338198852539062
+Traceback (most recent call last):
+  File "/home/enzo/Documents/gpt2/gpt2_fabric.py", line 367, in <module>
+    run.log({"generated_samples": wandb.Table(data=[[s] for s in result_strings], columns=["Text"])}, step=step_counter)
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 452, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 403, in wrapper_fn
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 393, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 1934, in log
+    self._log(data=data, step=step, commit=commit)
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 1653, in _log
+    self._partial_history_callback(data, step, commit)
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 1525, in _partial_history_callback
+    self._backend.interface.publish_partial_history(
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/interface/interface.py", line 629, in publish_partial_history
+    data = history_dict_to_json(run, data, step=user_step, ignore_copy_err=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/data_types/utils.py", line 54, in history_dict_to_json
+    payload[key] = val_to_json(
+                   ^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/data_types/utils.py", line 159, in val_to_json
+    run.log_artifact(art)
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 403, in wrapper_fn
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 393, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 3127, in log_artifact
+    return self._log_artifact(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 3275, in _log_artifact
+    self._assert_can_log_artifact(artifact)
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/wandb_run.py", line 3326, in _assert_can_log_artifact
+    expected_type = Artifact._expected_type(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/artifacts/artifact.py", line 2280, in _expected_type
+    response = client.execute(
+               ^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/lib/retry.py", line 212, in wrapped_fn
+    return retrier(*args, **kargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/lib/retry.py", line 131, in __call__
+    result = self._call_fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/apis/public/api.py", line 70, in execute
+    return self._client.execute(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/vendor/gql-0.2.0/wandb_gql/client.py", line 52, in execute
+    result = self._get_result(document, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/vendor/gql-0.2.0/wandb_gql/client.py", line 60, in _get_result
+    return self.transport.execute(document, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/wandb/sdk/lib/gql_request.py", line 58, in execute
+    request = self.session.post(self.url, **post_args)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/requests/sessions.py", line 637, in post
+    return self.request("POST", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/socket.py", line 976, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

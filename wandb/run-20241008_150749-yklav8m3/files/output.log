@@ -1,0 +1,71 @@
+2024-10-08 15:07:51,004 - WARNING - Disabling compilation
+2024-10-08 15:07:51,996 - INFO - used cuda memory after creating model: 552298496
+Number of decayed parameter tensors 50 for a total of 124354560 parameters
+Number of non-decayed parameter tensors 98 for a total of 121344 parameters
+2024-10-08 15:07:52,575 - INFO - total desired batch size: 524288
+2024-10-08 15:07:52,576 - INFO - => computed gradient accumulation steps 32
+2024-10-08 15:07:57,460 - INFO - tokens per second = 107402 | loss: 10.642019 | gradient norm 0.1797 | dt 4881.533384 ms | CUDA memory: 1022.55 MB | CPU memory: 1.98 GB
+2024-10-08 15:08:02,266 - INFO - tokens per second = 109140 | loss: 10.622702 | gradient norm 0.1782 | dt 4803.805828 ms | CUDA memory: 1973.05 MB | CPU memory: 2.05 GB
+2024-10-08 15:08:06,927 - INFO - tokens per second = 112463 | loss: 10.584438 | gradient norm 0.1987 | dt 4661.879301 ms | CUDA memory: 1973.05 MB | CPU memory: 2.06 GB
+2024-10-08 15:08:11,587 - INFO - Saving model
+2024-10-08 15:08:11,888 - INFO - Model saved
+2024-10-08 15:08:11,894 - INFO - tokens per second = 105566 | loss: 10.527597 | gradient norm 0.2126 | dt 4966.434717 ms | CUDA memory: 1973.05 MB | CPU memory: 2.08 GB
+2024-10-08 15:08:16,565 - INFO - tokens per second = 112237 | loss: 10.456533 | gradient norm 0.1872 | dt 4671.278238 ms | CUDA memory: 1973.05 MB | CPU memory: 2.06 GB
+2024-10-08 15:08:21,236 - INFO - tokens per second = 112239 | loss: 10.365731 | gradient norm 0.1718 | dt 4671.180010 ms | CUDA memory: 1973.05 MB | CPU memory: 2.06 GB
+2024-10-08 15:08:25,914 - INFO - tokens per second = 112081 | loss: 10.278518 | gradient norm 0.1583 | dt 4677.756548 ms | CUDA memory: 1973.05 MB | CPU memory: 2.06 GB
+2024-10-08 15:08:30,593 - INFO - tokens per second = 112046 | loss: 10.182520 | gradient norm 0.1384 | dt 4679.203272 ms | CUDA memory: 1973.05 MB | CPU memory: 2.06 GB
+2024-10-08 15:08:35,271 - INFO - Saving model
+2024-10-08 15:08:35,575 - INFO - Model saved
+2024-10-08 15:08:35,580 - INFO - tokens per second = 105125 | loss: 10.089616 | gradient norm 0.1346 | dt 4987.260103 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:08:40,270 - INFO - tokens per second = 111791 | loss: 10.016447 | gradient norm 0.1246 | dt 4689.909458 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:08:44,963 - INFO - tokens per second = 111723 | loss: 9.942732 | gradient norm 0.1096 | dt 4692.758322 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:08:49,647 - INFO - tokens per second = 111933 | loss: 9.886478 | gradient norm 0.1119 | dt 4683.934927 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:08:54,334 - INFO - tokens per second = 111868 | loss: 9.820597 | gradient norm 0.1016 | dt 4686.676025 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:08:59,017 - INFO - Saving model
+2024-10-08 15:08:59,312 - INFO - Model saved
+2024-10-08 15:08:59,318 - INFO - tokens per second = 105193 | loss: 9.776727 | gradient norm 0.0911 | dt 4984.062195 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:04,015 - INFO - tokens per second = 111620 | loss: 9.718281 | gradient norm 0.0942 | dt 4697.064161 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:08,708 - INFO - tokens per second = 111710 | loss: 9.661853 | gradient norm 0.0815 | dt 4693.292856 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:13,565 - INFO - tokens per second = 107944 | loss: 9.630369 | gradient norm 0.0854 | dt 4857.041597 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:18,649 - INFO - tokens per second = 103135 | loss: 9.579939 | gradient norm 0.0838 | dt 5083.496332 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:23,691 - INFO - Saving model
+2024-10-08 15:09:23,998 - INFO - Model saved
+2024-10-08 15:09:24,004 - INFO - tokens per second = 97919 | loss: 9.548779 | gradient norm 0.0809 | dt 5354.285955 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:29,287 - INFO - tokens per second = 99222 | loss: 9.567161 | gradient norm 0.0730 | dt 5283.968925 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:34,332 - INFO - tokens per second = 103924 | loss: 9.543383 | gradient norm 0.0689 | dt 5044.918776 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:39,305 - INFO - tokens per second = 105432 | loss: 9.443910 | gradient norm 0.0703 | dt 4972.740412 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:44,381 - INFO - tokens per second = 103281 | loss: 9.409147 | gradient norm 0.0685 | dt 5076.314449 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:49,373 - INFO - Saving model
+2024-10-08 15:09:49,665 - INFO - Model saved
+2024-10-08 15:09:49,670 - INFO - tokens per second = 99126 | loss: 9.376404 | gradient norm 0.0686 | dt 5289.124966 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:54,497 - INFO - tokens per second = 108622 | loss: 9.376627 | gradient norm 0.0693 | dt 4826.725483 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:09:59,436 - INFO - tokens per second = 106146 | loss: 9.324143 | gradient norm 0.0696 | dt 4939.326763 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:10:04,382 - INFO - tokens per second = 106009 | loss: 9.320200 | gradient norm 0.0696 | dt 4945.693493 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:10:09,263 - INFO - tokens per second = 107413 | loss: 9.293973 | gradient norm 0.0653 | dt 4881.060839 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:10:14,148 - INFO - Saving model
+2024-10-08 15:10:14,449 - INFO - Model saved
+2024-10-08 15:10:14,455 - INFO - tokens per second = 100982 | loss: 9.241149 | gradient norm 0.0740 | dt 5191.914082 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:10:19,374 - INFO - tokens per second = 106586 | loss: 9.252364 | gradient norm 0.0676 | dt 4918.913126 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:10:24,253 - INFO - tokens per second = 107454 | loss: 9.208762 | gradient norm 0.0632 | dt 4879.189491 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:10:29,272 - INFO - tokens per second = 104466 | loss: 9.238843 | gradient norm 0.0667 | dt 5018.748760 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:10:34,111 - INFO - tokens per second = 108348 | loss: 9.181964 | gradient norm 0.0654 | dt 4838.938475 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+2024-10-08 15:10:38,999 - INFO - Saving model
+2024-10-08 15:10:39,302 - INFO - Model saved
+2024-10-08 15:10:39,308 - INFO - tokens per second = 100877 | loss: 9.181200 | gradient norm 0.0719 | dt 5197.288990 ms | CUDA memory: 1973.05 MB | CPU memory: 2.07 GB
+Traceback (most recent call last):
+  File "/home/enzo/Documents/gpt2/gpt2_fabric.py", line 294, in <module>
+    loss, norm = training_step(x, y)
+                 ^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/Documents/gpt2/gpt2_fabric.py", line 265, in training_step
+    norm = torch.nn.utils.clip_grad_norm_(model.parameters(),
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/torch/nn/utils/clip_grad.py", line 21, in _no_grad_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/torch/nn/utils/clip_grad.py", line 82, in clip_grad_norm_
+    clip_coef = max_norm / (total_norm + 1e-6)
+                ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/torch/_tensor.py", line 35, in wrapped
+    @functools.wraps(f, assigned=assigned)
+
+KeyboardInterrupt

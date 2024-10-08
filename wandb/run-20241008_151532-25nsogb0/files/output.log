@@ -1,0 +1,29 @@
+2024-10-08 15:15:32,817 - WARNING - Disabling compilation
+2024-10-08 15:15:33,789 - INFO - used cuda memory after creating model: 552298496
+Number of decayed parameter tensors 50 for a total of 124354560 parameters
+Number of non-decayed parameter tensors 98 for a total of 121344 parameters
+2024-10-08 15:15:34,363 - INFO - total desired batch size: 524288
+2024-10-08 15:15:34,363 - INFO - => computed gradient accumulation steps 32
+2024-10-08 15:15:39,269 - INFO - tokens per second = 106950 | loss: 10.611632 | gradient norm 0.1547 | dt 4902.199984 ms | CUDA memory: 1022.55 MB | CPU memory: 1.98 GB
+2024-10-08 15:15:44,082 - INFO - tokens per second = 108956 | loss: 10.595140 | gradient norm 0.1521 | dt 4811.916351 ms | CUDA memory: 1973.05 MB | CPU memory: 2.06 GB
+2024-10-08 15:15:48,753 - INFO - tokens per second = 112246 | loss: 10.563706 | gradient norm 0.1761 | dt 4670.888901 ms | CUDA memory: 1973.05 MB | CPU memory: 2.06 GB
+2024-10-08 15:15:53,428 - INFO - tokens per second = 112136 | loss: 10.514346 | gradient norm 0.1855 | dt 4675.482273 ms | CUDA memory: 1973.05 MB | CPU memory: 2.06 GB
+2024-10-08 15:15:53,429 - INFO - Saving model
+2024-10-08 15:15:53,936 - INFO - Model saved
+Traceback (most recent call last):
+  File "/home/enzo/Documents/gpt2/gpt2_fabric.py", line 341, in <module>
+    logits, loss = model(x, y)
+                   ^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/Documents/gpt2/gpt2_fabric.py", line 190, in forward
+    loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1)) # cross-entropy takes unnormalized logits and ground truth targets (not one-hot encoded, but just the indices of the correct tokens)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enzo/mambaforge/envs/up_to_date/lib/python3.12/site-packages/torch/nn/functional.py", line 3104, in cross_entropy
+    return torch._C._nn.cross_entropy_loss(input, target, weight, _Reduction.get_enum(reduction), ignore_index, label_smoothing)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 3.07 GiB. GPU 0 has a total capacity of 23.63 GiB of which 1.07 GiB is free. Including non-PyTorch memory, this process has 22.06 GiB memory in use. Of the allocated memory 21.53 GiB is allocated by PyTorch, and 70.24 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

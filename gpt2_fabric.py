@@ -3,36 +3,35 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
+import tiktoken; enc = tiktoken.get_encoding("gpt2")
+from hellaswag import render_example, iterate_examples
+import itertools
 import math
 import time
 import os
 import logging
 import argparse
-# additional imports from PyTorch and Lightning
-import lightning as L
+import psutil
 from torch.utils.data import IterableDataset, DataLoader
+torch.set_float32_matmul_precision("high")
 
+import wandb
+run = wandb.init(project="gpt2")
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-disable_compilation=False
-
-
-# Set up argument parser
-parser = argparse.ArgumentParser(description="A script to demonstrate logging level control.")
+parser = argparse.ArgumentParser()
 parser.add_argument('--log', default='info', choices=['debug', 'info', 'warning', 'error', 'critical'],
                     help="Set the logging level (default: info)")
-
-# Parse arguments
 args = parser.parse_args()
-
-# Set logging level based on user input
 log_level = getattr(logging, args.log.upper(), logging.INFO)
 logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
 
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-
-
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+disable_compilation=False
+if disable_compilation:
+    logging.warning("Disabling compilation")
+else:
+    logging.info("Enabling compilation")
 
 def load_tokens(filename):
     npt = np.load(filename)
@@ -54,7 +53,7 @@ class GPTDataset(IterableDataset):
         self.shards = shards
         self.current_position = 0
     def __iter__(self):
-        shard_iter = iter(self.shards)
+        shard_iter = itertools.cycle(self.shards)
         for shard_path in shard_iter:
             tokens = load_tokens(shard_path)
             current_position = 0
@@ -194,9 +193,6 @@ class GPT(nn.Module):
             loss = None
         return logits, loss
 
-logging.info("Check if pinning the memory is OK.")
-logging.debug("""Choosing batch_size=None should allow us to not add a batching dimension to
-                the data, which is already batched in the dataset.""")
 
 B = 16
 if B == 20:
@@ -221,7 +217,6 @@ train_dataloader = DataLoader(GPTDataset(B, T, "train"),
 
 # train_dataloader = DataLoader(GPTDataset(B, 1024, "train"), batch_size=None, shuffle=False)
 
-# val_dataloader = DataLoader(GPTDataset(B, 1024, "val"), batch_size=None, shuffle=False)
 model = GPT(GPTConfig(vocab_size=50304, block_size=1024))
 
 model.to(device)
@@ -229,8 +224,9 @@ model.train()
 logging.info(f"used cuda memory after creating model: {torch.cuda.memory_allocated()}")
 optimizer = model.configure_optimizers(weight_decay=0.1,
                                        learning_rate=6e-4)
-torch.set_float32_matmul_precision("high")
+# Testing whether compiling the model and optimizer before compiling the forward pass function makes any difference.
 
+model = torch.compile(model, mode="max-autotune", disable=disable_compilation)
 
 
 logging.info(f"total desired batch size: {total_batch_size}")
@@ -257,6 +253,7 @@ def optim_step():
     optimizer.step()
     scheduler.step()
     optimizer.zero_grad()
+    return scheduler.get_last_lr()[0]
 
 @torch.compile(mode="max-autotune", disable=disable_compilation)
 def training_step(x, y):
@@ -265,9 +262,10 @@ def training_step(x, y):
         logits, loss = model(x, y)
     loss = loss / grad_accum_steps
     loss.backward()
+
     norm = torch.nn.utils.clip_grad_norm_(model.parameters(),
-                                          max_norm =1.0,
-                                          error_if_nonfinite=True)
+                                        max_norm =1.0,
+                                        error_if_nonfinite=True)
     logging.debug("maybe the norm error if nonfinite slows down the program")
     return loss, norm
 
@@ -276,29 +274,153 @@ get_lr = get_scheduler(max_coefficient,
                        warmup_steps,
                        max_steps)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, get_lr)
+def get_most_likely_row(tokens, mask, logits):
+    # evaluate the autoregressive loss at all positions
+    shift_logits = (logits[..., :-1, :]).contiguous()
+    shift_tokens = (tokens[..., 1:]).contiguous()
+    flat_shift_logits = shift_logits.view(-1, shift_logits.size(-1))
+    flat_shift_tokens = shift_tokens.view(-1)
+    shift_losses = F.cross_entropy(flat_shift_logits, flat_shift_tokens, reduction='none')
+    shift_losses = shift_losses.view(tokens.size(0), -1)
+    # now get the average loss just for the completion region (where mask == 1), in each row
+    shift_mask = (mask[..., 1:]).contiguous() # we must shift mask, so we start at the last prompt token
+    masked_shift_losses = shift_losses * shift_mask
+    # sum and divide by the number of 1s in the mask
+    sum_loss = masked_shift_losses.sum(dim=1)
+    avg_loss = sum_loss / shift_mask.sum(dim=1)
+    # now we have a loss for each of the 4 completions
+    # the one with the lowest loss should be the most likely
+    pred_norm = avg_loss.argmin().item()
+    return pred_norm
+
 
 logging.debug("""Please make sure that we actually want to do a certain number of steps,
                 rather than a certain number of epochs.""")
+steps_save = 5 # approximately 4 seconds*1000 = 4000 seconds = 1 hour 10 minutes
+batch_accum_counter = 0
+step_counter = 0
+total_processed_tokens = 0
+temp_step_counter = 0 
+total_loss = torch.tensor(0.0)
+t0 = time.time()
+t1 = time.time()
+for step, buf in enumerate(train_dataloader):
+    batch_accum_counter += 1
+    x = buf[:-1].view(B, T)
+    y = buf[1:].view(B, T)
+    x = x.to(device, non_blocking=True)
+    y = y.to(device, non_blocking=True)
+    logging.debug(f"In the training loop, x shape {x.shape}, y shape {y.shape}")
+    loss, norm = training_step(x, y)
+    total_loss += loss.detach().cpu()
 
-num_epochs = 5
-for epoch in range(num_epochs):
-    total_loss = torch.tensor(0.0)
-    t0 = time.time()
-    t1 = time.time()
-    for step, buf in enumerate(train_dataloader):
-        x = buf[:-1].view(B, T)
-        y = buf[1:].view(B, T)
-        x = x.to(device, non_blocking=True)
-        y = y.to(device, non_blocking=True)
-        logging.debug(f"In the training loop, x shape {x.shape}, y shape {y.shape}")
-        loss, norm = training_step(x, y)
-        total_loss += loss.detach().cpu()
-        if step % grad_accum_steps == grad_accum_steps - 1:
-            optim_step()
-            logging.info(f"Epoch {epoch}, step {step}, loss {total_loss.item()}")
-            t0 = t1
-            t1 = time.time()
-            dt = (t1 - t0)
-            tokens_per_second = B * T * grad_accum_steps / dt
-            logging.info(f"tokens per second = {tokens_per_second:.0f} | loss: {total_loss.item():.6f} | gradient norm {norm:.4f} | dt {dt*1000:.6f} ms")
-            total_loss = torch.tensor(0.0)
+    if batch_accum_counter % grad_accum_steps == grad_accum_steps - 1:
+        batch_accum_counter = 0
+        step_counter += 1
+        temp_step_counter += 1
+        cuda_memory = torch.cuda.memory_allocated() if "cuda" in device else 0
+        cpu_memory = psutil.Process(os.getpid()).memory_info().rss / (1024 ** 3)  # in GB
+
+        last_lr = optim_step()
+        t0 = t1
+        t1 = time.time()
+        dt = (t1 - t0)
+        tokens_per_second = B * T * grad_accum_steps / dt
+        total_processed_tokens += B * T * grad_accum_steps
+        logging.info(f"tokens per second = {tokens_per_second:.0f} | loss: {total_loss.item():.6f} | "
+                        f"gradient norm {norm:.4f} | dt {dt*1000:.6f} ms | "
+                        f"CUDA memory: {cuda_memory / (1024 ** 2):.2f} MB | "
+                        f"CPU memory: {cpu_memory:.2f} GB")
+        
+        run.log({"tokens per second": tokens_per_second,
+                                    "loss": total_loss.item(),
+                                    "gradient norm": norm,
+                                    "dt": dt,
+                                    "CUDA memory": cuda_memory / (1024 ** 2),
+                                    "CPU memory": cpu_memory,
+                                    "learning rate": last_lr,
+                                    "total_processed_tokens": total_processed_tokens,
+                                    "ETA to 10 billion tokens": (10**10 - total_processed_tokens) / tokens_per_second},
+                                    step=step_counter)
+        total_loss = torch.tensor(0.0)
+    if temp_step_counter == steps_save - 1:
+        logging.info("Saving model")
+        torch.save(model.state_dict(), f"model_{step_counter}.pt")
+        logging.info("Model saved")
+        model.eval()
+        val_dataloader = DataLoader(GPTDataset(B, T, "val"),
+                                    batch_size=None,
+                                    shuffle=False,)
+        loss_val = torch.tensor(0.0)
+        loss_val_steps = 20
+        for step, buf in enumerate(val_dataloader):
+            x = buf[:-1].view(B, T)
+            y = buf[1:].view(B, T)
+            x = x.to(device)
+            y = y.to(device)
+            with torch.no_grad():
+                with torch.autocast(device_type=device, dtype=torch.bfloat16):
+                    logits, loss = model(x, y)
+            loss_val += loss.cpu()
+            if step >= loss_val_steps:
+                break
+        logging.info(f"Validation loss: {loss_val.item() / loss_val_steps}")
+        run.log({"Validation loss": loss_val.item() / loss_val_steps}, step=step_counter)
+
+        # Sample from the model in batch
+        num_return_sequences = 5
+        max_length = 32
+        initial_prompt = "Hello, I am a language model,"
+
+        tokens = enc.encode(initial_prompt)
+        tokens = torch.tensor(tokens, dtype=torch.long).unsqueeze(0).to(device)
+        tokens = tokens.repeat(num_return_sequences, 1)  # Create batch
+        xgen = tokens.clone()
+        sample_rng = torch.Generator(device=device)
+        sample_rng.manual_seed(42)  # For reproducibility
+
+        while xgen.size(1) < max_length:
+            with torch.no_grad():
+                logits, _ = model(xgen)
+            logits = logits[:, -1, :]  # Get logits for the last token
+            probs = F.softmax(logits, dim=-1)
+            topk_probs, topk_indices = torch.topk(probs, k=50, dim=-1)
+            next_tokens = torch.multinomial(topk_probs, num_samples=1, generator=sample_rng)
+            next_tokens = topk_indices.gather(dim=-1, index=next_tokens)
+            xgen = torch.cat([xgen, next_tokens], dim=1)
+
+        # Decode and log generated samples
+        result_strings = []
+        for i in range(num_return_sequences):
+            tokens = xgen[i].cpu().numpy().tolist()
+            decoded = enc.decode(tokens)
+            result_strings.append(decoded)
+            logging.info(f"Sample {i+1}: {decoded}")
+
+        # Log the generated samples to wandb
+        table = wandb.Table(columns=["Sample"])
+        for sample in result_strings:
+            table.add_data(sample)
+        run.log({"generated_samples": table}, step=step_counter)
+
+        model.train()
+        temp_step_counter = 0
+
+        # Evaluating on Hellaswag
+        num_correct_norm = 0
+        num_total = 0
+        for i, example in enumerate(iterate_examples("val")):
+            _, tokens, mask, label = render_example(example)
+            tokens = tokens.to(device)
+            mask = mask.to(device)
+
+            with torch.no_grad():
+                with torch.autocast(device_type=device, dtype=torch.bfloat16):
+                    logits, _ = model(tokens)
+            pred_norm = get_most_likely_row(tokens, mask, logits)
+            num_total += 1
+            num_correct_norm += int(pred_norm == label)
+        
+        accuracy_norm = num_correct_norm / num_total
+        logging.info(f"Accuracy on Hellaswag: {accuracy_norm}")
+        run.log({"Accuracy on Hellaswag": accuracy_norm}, step=step_counter)
