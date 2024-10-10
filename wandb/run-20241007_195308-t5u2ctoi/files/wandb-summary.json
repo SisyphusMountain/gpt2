@@ -1,1 +1,0 @@
-{"_timestamp":1.7283238938942351e+09,"tokens per second":127825.99894915236,"_runtime":304.950351601,"dt":4.101575613021851,"loss":8.2820405960083,"_step":75,"CUDA memory":1478.46240234375,"gradient norm":0.040384143590927124,"CPU memory":1.9943428039550781,"_wandb":{"runtime":305},"trainer/global_step":0}
