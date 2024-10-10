@@ -10,7 +10,7 @@ import os
 from datasets import load_dataset
 """Ideas:
 - Only warmup attention"""
-disable_compilation = True
+disable_compilation = False
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 

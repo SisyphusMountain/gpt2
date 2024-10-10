@@ -3,7 +3,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
-import tiktoken; enc = tiktoken.get_encoding("gpt2")
+import tiktoken
+enc = tiktoken.get_encoding("gpt2")
 from hellaswag import render_example, iterate_examples
 import itertools
 import math
@@ -13,9 +14,11 @@ import logging
 import argparse
 import psutil
 from torch.utils.data import IterableDataset, DataLoader
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint, Callback
-from pytorch_lightning.loggers import WandbLogger
+import lightning.pytorch as pl
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import WandbLogger
+from collections import deque
+
 torch.set_float32_matmul_precision("high")
 
 # Initialize wandb logger
@@ -59,6 +62,7 @@ class GPTDataset(IterableDataset):
     def __iter__(self):
         shard_iter = itertools.cycle(self.shards)
         for shard_path in shard_iter:
+            logging.info(f"Loading shard {shard_path}")
             tokens = load_tokens(shard_path)
             current_position = 0
             while current_position + self.B * self.T + 1 < len(tokens):
@@ -155,7 +159,7 @@ class GPT(nn.Module):
         non_decay_params = [p for (n, p) in param_dict.items() if p.dim() < 2]
         optim_groups = [{"params": decay_params, "weight_decay": weight_decay},
                         {"params": non_decay_params, "weight_decay": 0.0}]
-        optimizer = torch.optim.AdamW(optim_groups, lr=learning_rate, betas=(0.9, 0.95), eps=1e-8, fused=False)
+        optimizer = torch.optim.AdamW(optim_groups, lr=torch.tensor(learning_rate), betas=(0.9, 0.95), eps=1e-8, fused=True)
         return optimizer
 
     def forward(self, idx, targets=None):
@@ -184,40 +188,38 @@ class GPTLightningModule(pl.LightningModule):
         self.model = GPT(config)
         if not disable_compilation:
             self.model = torch.compile(self.model, mode="max-autotune")
+
+        self.automatic_optimization = False  # Disable automatic optimization
+        if not self.automatic_optimization:
+            logging.warning(f"Automatic optimization is set to {self.automatic_optimization}")
+
         self.config = config
         self.B = B
         self.T = T
         self.total_batch_size = total_batch_size
         self.grad_accum_steps = grad_accum_steps
         self.max_steps = max_steps
+        self.batched_steps = max_steps // grad_accum_steps
 
-        self.lr = 6e-4
+        self.lr = 6e-4 * 2
         self.weight_decay = 0.1
         # Scheduler parameters
         self.max_coefficient = 1.0
-        self.min_coefficient = self.max_coefficient * 0.1
-        self.warmup_steps = 715
+        self.min_coefficient = self.max_coefficient * 0.05
+        self.warmup_steps = 100
 
-        # Log any hyperparameters
+        # Initialize variables for gradient accumulation and logging
+        self.batch_accum_counter = 0
+        self.total_loss = 0.0
+        self.total_tokens_processed = 0
+        self.start_time = time.time()
+
+        # Save any hyperparameters
         self.save_hyperparameters()
 
     def forward(self, x, y=None):
         return self.model(x, y)
 
-    def training_step(self, batch, batch_idx):
-        x = batch[:-1].view(self.B, self.T)
-        y = batch[1:].view(self.B, self.T)
-        logits, loss = self(x, y)
-        self.log('train_loss', loss, on_step=True, on_epoch=False, prog_bar=True)
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        self.model.eval()
-        x = batch[:-1].view(self.B, self.T)
-        y = batch[1:].view(self.B, self.T)
-        logits, loss = self(x, y)
-        self.log('val_loss', loss, on_step=True, on_epoch=False, prog_bar=True)
-        return loss
     def configure_optimizers(self):
         optimizer = self.model.configure_optimizers(self.weight_decay, self.lr)
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, self.get_scheduler())
@@ -227,13 +229,79 @@ class GPTLightningModule(pl.LightningModule):
         def lr_lambda(current_step):
             if current_step < self.warmup_steps:
                 return self.max_coefficient * (current_step + 1) / (self.warmup_steps)
-            elif current_step > self.max_steps:
+            elif current_step > self.batched_steps:
                 return self.min_coefficient
             else:
-                decay_ratio = (current_step - self.warmup_steps) / (self.max_steps - self.warmup_steps)
+                decay_ratio = (current_step - self.warmup_steps) / (self.batched_steps - self.warmup_steps)
                 coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
                 return self.min_coefficient + coeff * (self.max_coefficient - self.min_coefficient)
         return lr_lambda
+
+    def training_step(self, batch, batch_idx):
+        # See https://lightning.ai/docs/pytorch/stable/common/optimization.html for gradient accumulation and manual backward
+        self.model.train()
+        optimizer = self.optimizers()
+        scheduler = self.lr_schedulers()
+
+        x = batch[:-1].view(self.B, self.T)
+        y = batch[1:].view(self.B, self.T)
+
+        with torch.autocast(device_type="cuda" if "cuda" in device else "cpu", dtype=torch.bfloat16):
+            logits, loss = self(x, y)
+
+        loss = loss / self.grad_accum_steps
+        self.total_loss += loss.detach().cpu().item()
+        self.batch_accum_counter += 1
+
+        # Manual backward
+        self.manual_backward(loss)
+
+        if self.batch_accum_counter % self.grad_accum_steps == self.grad_accum_steps - 1:
+            # Gradient clipping. We don't need to rescale gradients since we are using bfloat16 and not fp16.
+            norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm = 1.0, error_if_nonfinite=True)
+
+            # Optimizer step
+            optimizer.step()
+            optimizer.zero_grad()
+
+            # Scheduler step
+            scheduler.step()
+
+            # Logging
+            lr = optimizer.param_groups[0]['lr']
+            cuda_memory = torch.cuda.memory_allocated() if "cuda" in device else 0
+            cpu_memory = psutil.Process(os.getpid()).memory_info().rss / (1024 ** 3)  # in GB
+
+            current_time = time.time()
+            dt = current_time - self.start_time
+            tokens_per_second = (self.B * self.T * self.grad_accum_steps) / dt
+            self.total_tokens_processed = self.B * self.T * batch_idx
+            eta = (10**10 - self.total_tokens_processed) / tokens_per_second if tokens_per_second > 0 else float('inf')
+
+            # Log metrics
+            self.log('train/loss', self.total_loss, on_step=True, on_epoch=False, prog_bar=True)
+            self.log('train/lr', lr, on_step=True, on_epoch=False)
+            self.log('train/tokens_per_second', tokens_per_second, on_step=True, on_epoch=False)
+            self.log('train/total_tokens_processed', self.total_tokens_processed, on_step=True, on_epoch=False)
+            self.log('train/ETA_to_10B_tokens', eta, on_step=True, on_epoch=False)
+            self.log('train/CUDA_memory_MB', cuda_memory / (1024 ** 2), on_step=True, on_epoch=False)
+            self.log('train/CPU_memory_GB', cpu_memory, on_step=True, on_epoch=False)
+            self.log("train/norm", norm, on_step=True, on_epoch=False)
+            # Reset counters
+            self.total_loss = 0.0
+            self.batch_accum_counter = 0
+            self.start_time = time.time()
+
+    def validation_step(self, batch, batch_idx):
+        self.model.eval()
+        x = batch[:-1].view(self.B, self.T)
+        y = batch[1:].view(self.B, self.T)
+        with torch.autocast(device_type="cuda" if "cuda" in device else "cpu", dtype=torch.bfloat16):
+            with torch.no_grad():
+                logits, loss = self(x, y)
+        self.log('val/loss', loss, on_step=True, on_epoch=False, prog_bar=True)
+        return loss
+
 
 # Function to get the most likely row in HellaSwag evaluation
 def get_most_likely_row(tokens, mask, logits):
@@ -249,53 +317,6 @@ def get_most_likely_row(tokens, mask, logits):
     avg_loss = sum_loss / shift_mask.sum(dim=1)
     pred_norm = avg_loss.argmin().item()
     return pred_norm
-
-from collections import deque
-
-# Custom Callback to compute and log tokens per second and ETA to 10B tokens using a sliding window
-class TokenSpeedLogger(pl.Callback):
-    def __init__(self, total_tokens_target=10**10, window_size=100):
-        super().__init__()
-        self.total_tokens_target = total_tokens_target
-        self.window_size = window_size
-        self.token_timestamps = deque()
-        self.total_tokens_processed = 0
-        self.start_time = None
-
-    def on_train_start(self, trainer, pl_module):
-        self.start_time = time.time()
-        self.token_timestamps.append((self.total_tokens_processed, self.start_time))
-
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        # Number of tokens in this batch
-        tokens_in_batch = pl_module.B * pl_module.T
-        self.total_tokens_processed += tokens_in_batch
-
-        current_time = time.time()
-        self.token_timestamps.append((self.total_tokens_processed, current_time))
-
-        # Keep only the last 'window_size' entries
-        if len(self.token_timestamps) > self.window_size:
-            self.token_timestamps.popleft()
-
-        # Compute tokens per second over the sliding window
-        delta_tokens = self.total_tokens_processed - self.token_timestamps[0][0]
-        delta_time = current_time - self.token_timestamps[0][1]
-        tokens_per_second = delta_tokens / delta_time if delta_time > 0 else 0.0
-
-        # Estimated time to reach total_tokens_target
-        tokens_remaining = self.total_tokens_target - self.total_tokens_processed
-        eta = tokens_remaining / tokens_per_second if tokens_per_second > 0 else float('inf')
-
-        # Log metrics
-        metrics = {
-            'tokens_per_second': tokens_per_second,
-            'estimated_time_to_10B_tokens': eta,
-            'total_tokens_processed': self.total_tokens_processed,
-        }
-
-        # Log to wandb using the logger
-        trainer.logger.log_metrics(metrics, step=trainer.global_step)
 
 # Hyperparameters
 B = 16
@@ -317,37 +338,40 @@ max_steps = 19500 * grad_accum_steps
 # Initialize model
 config = GPTConfig(vocab_size=50304, block_size=1024)
 model = GPTLightningModule(config, total_batch_size, B, T, grad_accum_steps, max_steps, disable_compilation=disable_compilation)
+# model = GPTLightningModule.load_from_checkpoint("/home/enzo/Documents/gpt2/saved_files/gpt2/5ykp6a5e/checkpoints/epoch=0-step=9000.ckpt",)
 
 # DataLoader
 train_dataloader = DataLoader(GPTDataset(B, T, "train"),
                               batch_size=None,
                               shuffle=False,
-                              num_workers=4,
                               pin_memory=True,
-                              pin_memory_device=device)
+                              pin_memory_device=device,
+                              persistent_workers=True)
 val_dataloader = DataLoader(GPTDataset(B, T, "val"),
                             batch_size=None,
                             shuffle=False,
-                            num_workers=4,
                             pin_memory=False,)
 
 # Callbacks
 checkpoint_callback = ModelCheckpoint(every_n_train_steps=steps_save)
-token_speed_logger = TokenSpeedLogger(total_tokens_target=10**10)
+# Remove TokenSpeedLogger since we handle logging manually in training_step
+# token_speed_logger = TokenSpeedLogger(total_tokens_target=10**10)
+
 # Trainer
 trainer = pl.Trainer(
     max_steps=max_steps,
+    log_every_n_steps=50,
     limit_val_batches=20,
     val_check_interval=1024,
-    accumulate_grad_batches=grad_accum_steps,
-    gradient_clip_val=1.0,
-    gradient_clip_algorithm='norm',
+    # Remove accumulate_grad_batches since we're handling it manually. Disable automatic gradient clipping.
     logger=wandb_logger,
-    callbacks=[checkpoint_callback, token_speed_logger],
+    callbacks=[checkpoint_callback],
     devices=1,
     accelerator='gpu' if torch.cuda.is_available() else 'cpu',
-    precision='bf16',
+    precision='bf16-mixed',
 )
 
 # Start training
-trainer.fit(model, train_dataloader, val_dataloader)
+trainer.fit(model,
+            train_dataloader,
+            val_dataloader,)
