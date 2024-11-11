@@ -291,8 +291,8 @@ def optim_step():
 for buf in train_dataloader:
     x = buf[:-1].view(B, T)
     y = buf[1:].view(B, T)
-    x = x.to(device, non_blocking=True)
-    y = y.to(device, non_blocking=True)
+    x = x.to(device)
+    y = y.to(device)
     logging.debug(f"In the training loop, x shape {x.shape}, y shape {y.shape}")
     loss = training_step(x, y)
     total_loss += loss
