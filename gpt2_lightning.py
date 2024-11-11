@@ -33,7 +33,7 @@ logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(mes
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-disable_compilation = False
+disable_compilation = True
 if disable_compilation:
     logging.warning("Disabling compilation")
 else:
@@ -58,8 +58,10 @@ class GPTDataset(IterableDataset):
         shards = [os.path.join(self.data_root, s) for s in shards]
         self.shards = shards
         self.current_position = 0
-
+        self.worker_index = 0
+        self.num_workers = 1
     def __iter__(self):
+        self.shards = self.shards[self.worker_index::self.num_workers]
         shard_iter = itertools.cycle(self.shards)
         for shard_path in shard_iter:
             logging.info(f"Loading shard {shard_path}")
@@ -159,7 +161,7 @@ class GPT(nn.Module):
         non_decay_params = [p for (n, p) in param_dict.items() if p.dim() < 2]
         optim_groups = [{"params": decay_params, "weight_decay": weight_decay},
                         {"params": non_decay_params, "weight_decay": 0.0}]
-        optimizer = torch.optim.AdamW(optim_groups, lr=torch.tensor(learning_rate), betas=(0.9, 0.95), eps=1e-8, fused=True)
+        optimizer = torch.optim.AdamW(optim_groups, lr=learning_rate, betas=(0.9, 0.95), eps=1e-8, fused=False)
         return optimizer
 
     def forward(self, idx, targets=None):
@@ -201,16 +203,16 @@ class GPTLightningModule(pl.LightningModule):
         self.max_steps = max_steps
         self.batched_steps = max_steps // grad_accum_steps
 
-        self.lr = 6e-4 * 2
+        self.lr = 6e-4
         self.weight_decay = 0.1
         # Scheduler parameters
         self.max_coefficient = 1.0
-        self.min_coefficient = self.max_coefficient * 0.05
-        self.warmup_steps = 100
+        self.min_coefficient = self.max_coefficient * 0.1
+        self.warmup_steps = 731
 
         # Initialize variables for gradient accumulation and logging
         self.batch_accum_counter = 0
-        self.total_loss = 0.0
+        self.total_loss = torch.tensor(0.0)
         self.total_tokens_processed = 0
         self.start_time = time.time()
 
@@ -240,8 +242,6 @@ class GPTLightningModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         # See https://lightning.ai/docs/pytorch/stable/common/optimization.html for gradient accumulation and manual backward
         self.model.train()
-        optimizer = self.optimizers()
-        scheduler = self.lr_schedulers()
 
         x = batch[:-1].view(self.B, self.T)
         y = batch[1:].view(self.B, self.T)
@@ -250,25 +250,26 @@ class GPTLightningModule(pl.LightningModule):
             logits, loss = self(x, y)
 
         loss = loss / self.grad_accum_steps
-        self.total_loss += loss.detach().cpu().item()
+        self.total_loss += loss.detach().cpu()
         self.batch_accum_counter += 1
 
         # Manual backward
-        self.manual_backward(loss)
+        self.manual_backward(loss) 
 
-        if self.batch_accum_counter % self.grad_accum_steps == self.grad_accum_steps - 1:
+        if self.batch_accum_counter == self.grad_accum_steps:
             # Gradient clipping. We don't need to rescale gradients since we are using bfloat16 and not fp16.
-            norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm = 1.0, error_if_nonfinite=True)
+            # norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm = 1.0, error_if_nonfinite=True)
 
             # Optimizer step
-            optimizer.step()
-            optimizer.zero_grad()
-
+            logging.warning(f"Enzo: changed optimizer step")
+            self.optimizers().optimizer.step()
+            self.optimizers().optimizer.zero_grad()
+            
             # Scheduler step
-            scheduler.step()
+            self.lr_schedulers().step()
 
             # Logging
-            lr = optimizer.param_groups[0]['lr']
+            lr = self.optimizers().param_groups[0]['lr']
             cuda_memory = torch.cuda.memory_allocated() if "cuda" in device else 0
             cpu_memory = psutil.Process(os.getpid()).memory_info().rss / (1024 ** 3)  # in GB
 
@@ -279,16 +280,16 @@ class GPTLightningModule(pl.LightningModule):
             eta = (10**10 - self.total_tokens_processed) / tokens_per_second if tokens_per_second > 0 else float('inf')
 
             # Log metrics
-            self.log('train/loss', self.total_loss, on_step=True, on_epoch=False, prog_bar=True)
+            self.log('training_loss', self.total_loss, on_step=True, on_epoch=False, prog_bar=True)
             self.log('train/lr', lr, on_step=True, on_epoch=False)
             self.log('train/tokens_per_second', tokens_per_second, on_step=True, on_epoch=False)
             self.log('train/total_tokens_processed', self.total_tokens_processed, on_step=True, on_epoch=False)
             self.log('train/ETA_to_10B_tokens', eta, on_step=True, on_epoch=False)
             self.log('train/CUDA_memory_MB', cuda_memory / (1024 ** 2), on_step=True, on_epoch=False)
             self.log('train/CPU_memory_GB', cpu_memory, on_step=True, on_epoch=False)
-            self.log("train/norm", norm, on_step=True, on_epoch=False)
+            # self.log("train/norm", norm, on_step=True, on_epoch=False)
             # Reset counters
-            self.total_loss = 0.0
+            self.total_loss = torch.tensor(0.0)
             self.batch_accum_counter = 0
             self.start_time = time.time()
 
@@ -320,19 +321,13 @@ def get_most_likely_row(tokens, mask, logits):
 
 # Hyperparameters
 B = 16
-if B == 20:
-    total_batch_size = 512000
-elif B == 16:
-    total_batch_size = 524288
-elif B == 24:
-    total_batch_size = 589824
-else:
-    raise ValueError("Batch size not supported")
+total_batch_size = 524288
+
 T = 1024
 assert total_batch_size % (B * T) == 0
 grad_accum_steps = total_batch_size // (B * T)
 
-steps_save = 1000
+steps_save = 10000
 max_steps = 19500 * grad_accum_steps
 
 # Initialize model
@@ -341,37 +336,36 @@ model = GPTLightningModule(config, total_batch_size, B, T, grad_accum_steps, max
 # model = GPTLightningModule.load_from_checkpoint("/home/enzo/Documents/gpt2/saved_files/gpt2/5ykp6a5e/checkpoints/epoch=0-step=9000.ckpt",)
 
 # DataLoader
+def worker_init_fn(worker_id):
+    worker_info = torch.utils.data.get_worker_info()
+    dataset = worker_info.dataset
+    dataset.worker_index = worker_info.id
+    dataset.num_workers = worker_info.num_workers
+
 train_dataloader = DataLoader(GPTDataset(B, T, "train"),
+                              num_workers=1,
                               batch_size=None,
                               shuffle=False,
-                              pin_memory=True,
-                              pin_memory_device=device,
-                              persistent_workers=True)
-val_dataloader = DataLoader(GPTDataset(B, T, "val"),
-                            batch_size=None,
-                            shuffle=False,
-                            pin_memory=False,)
+                              worker_init_fn=worker_init_fn,)
+# val_dataloader = DataLoader(GPTDataset(B, T, "val"),
+#                             num_workers=1,
+#                             batch_size=None,
+#                             shuffle=False,
+#                             pin_memory=False,)
 
 # Callbacks
 checkpoint_callback = ModelCheckpoint(every_n_train_steps=steps_save)
-# Remove TokenSpeedLogger since we handle logging manually in training_step
-# token_speed_logger = TokenSpeedLogger(total_tokens_target=10**10)
 
 # Trainer
 trainer = pl.Trainer(
     max_steps=max_steps,
     log_every_n_steps=50,
-    limit_val_batches=20,
-    val_check_interval=1024,
-    # Remove accumulate_grad_batches since we're handling it manually. Disable automatic gradient clipping.
     logger=wandb_logger,
-    callbacks=[checkpoint_callback],
     devices=1,
     accelerator='gpu' if torch.cuda.is_available() else 'cpu',
-    precision='bf16-mixed',
+    # precision='bf16-mixed',
 )
 
 # Start training
 trainer.fit(model,
-            train_dataloader,
-            val_dataloader,)
+            train_dataloader,)

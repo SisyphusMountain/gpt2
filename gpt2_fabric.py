@@ -211,11 +211,8 @@ grad_accum_steps = total_batch_size // (B * T)
 # When using the commented dataloader instead of the uncommented train_dataloader, the performance drops to the level of uncompiled code.
 train_dataloader = DataLoader(GPTDataset(B, T, "train"),
                               batch_size=None,
-                              shuffle=False,
-                              pin_memory=True,
-                              pin_memory_device="cuda:0")
+                              shuffle=False,)
 
-# train_dataloader = DataLoader(GPTDataset(B, 1024, "train"), batch_size=None, shuffle=False)
 
 model = GPT(GPTConfig(vocab_size=50304, block_size=1024))
 
@@ -304,6 +301,10 @@ temp_step_counter = 0
 total_loss = torch.tensor(0.0)
 t0 = time.time()
 t1 = time.time()
+
+
+
+
 for step, buf in enumerate(train_dataloader):
     batch_accum_counter += 1
     x = buf[:-1].view(B, T)
