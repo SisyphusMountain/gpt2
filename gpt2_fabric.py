@@ -11,6 +11,7 @@ import time
 import os
 import logging
 import argparse
+import random
 import psutil
 from torch.utils.data import IterableDataset, DataLoader
 torch.set_float32_matmul_precision("high")
@@ -52,14 +53,22 @@ class GPTDataset(IterableDataset):
         shards = [os.path.join(self.data_root, s) for s in shards]
         self.shards = shards
         self.current_position = 0
+        self.worker_index = 0
+        self.num_workers = 1
+
     def __iter__(self):
+        # Distribute shards among workers if using multiple workers
+        self.shards = self.shards[self.worker_index::self.num_workers]
         shard_iter = itertools.cycle(self.shards)
+        
         for shard_path in shard_iter:
+            logging.info(f"Loading shard {shard_path}")
             tokens = load_tokens(shard_path)
-            current_position = 0
-            while current_position + self.B * self.T + 1 < len(tokens):
-                buf = tokens[current_position:current_position + self.B * self.T + 1]
-                current_position += self.B * self.T
+            indices = list(range(0, len(tokens) - self.B * self.T, self.B * self.T))
+            random.shuffle(indices)  # Shuffle indices to yield in random order
+
+            for start_idx in indices:
+                buf = tokens[start_idx: start_idx + self.B * self.T + 1]
                 yield buf
 
 
@@ -166,7 +175,7 @@ class GPT(nn.Module):
         print(f"Number of decayed parameter tensors {len(decay_params)} for a total of {num_decay_params} parameters")
         print(f"Number of non-decayed parameter tensors {len(non_decay_params)} for a total of {num_nondecay_params} parameters")
         # pass the learning rate as a tensor, because apparently this is needed afterwards to compile the optimizer with the scheduler.
-        optimizer = torch.optim.AdamW(optim_groups, lr=torch.tensor(learning_rate), betas=(0.9, 0.95), eps=1e-8, fused=True)
+        optimizer = torch.optim.AdamW(optim_groups, lr=learning_rate, betas=(0.9, 0.95), eps=1e-8,)
         return optimizer
 
     def forward(self, idx, targets=None):
@@ -261,8 +270,7 @@ def training_step(x, y):
     loss.backward()
 
     norm = torch.nn.utils.clip_grad_norm_(model.parameters(),
-                                        max_norm =1.0,
-                                        error_if_nonfinite=True)
+                                        max_norm =1.0,)
     logging.debug("maybe the norm error if nonfinite slows down the program")
     return loss, norm
 
@@ -293,7 +301,7 @@ def get_most_likely_row(tokens, mask, logits):
 
 logging.debug("""Please make sure that we actually want to do a certain number of steps,
                 rather than a certain number of epochs.""")
-steps_save = 5 # approximately 4 seconds*1000 = 4000 seconds = 1 hour 10 minutes
+steps_save = 1000 # approximately 4 seconds*1000 = 4000 seconds = 1 hour 10 minutes
 batch_accum_counter = 0
 step_counter = 0
 total_processed_tokens = 0
@@ -341,6 +349,7 @@ for step, buf in enumerate(train_dataloader):
                                     "CPU memory": cpu_memory,
                                     "learning rate": last_lr,
                                     "total_processed_tokens": total_processed_tokens,
+                                    "step": step_counter,
                                     "ETA to 10 billion tokens": (10**10 - total_processed_tokens) / tokens_per_second},
                                     step=step_counter)
         total_loss = torch.tensor(0.0)

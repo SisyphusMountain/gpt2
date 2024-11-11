@@ -45,6 +45,12 @@ def load_tokens(filename):
     return ptt
 
 # Dataset class
+import os
+import random
+import itertools
+import logging
+from torch.utils.data import IterableDataset
+
 class GPTDataset(IterableDataset):
     def __init__(self, B, T, split):
         assert split in {"train", "val"}
@@ -60,17 +66,22 @@ class GPTDataset(IterableDataset):
         self.current_position = 0
         self.worker_index = 0
         self.num_workers = 1
+
     def __iter__(self):
+        # Distribute shards among workers if using multiple workers
         self.shards = self.shards[self.worker_index::self.num_workers]
         shard_iter = itertools.cycle(self.shards)
+        
         for shard_path in shard_iter:
             logging.info(f"Loading shard {shard_path}")
             tokens = load_tokens(shard_path)
-            current_position = 0
-            while current_position + self.B * self.T + 1 < len(tokens):
-                buf = tokens[current_position:current_position + self.B * self.T + 1]
-                current_position += self.B * self.T
+            indices = list(range(0, len(tokens) - self.B * self.T, self.B * self.T))
+            random.shuffle(indices)  # Shuffle indices to yield in random order
+
+            for start_idx in indices:
+                buf = tokens[start_idx: start_idx + self.B * self.T + 1]
                 yield buf
+
 
 @dataclass
 class GPTConfig:
