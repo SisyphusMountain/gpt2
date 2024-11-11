@@ -9,4 +9,7 @@ https://wandb.ai/phyloteam/gpt2/runs/itfh7d3o/overview
 # Mistakes
 - Gradient clipping at each step instead of accumulating gradient
 - Calling optimizer.zero_grad at the start of each training_step instead of only once every gradient_accumulation steps
-- 
+- Not starting from working code.
+
+# Next steps
+- Start from Karpathy's code and iteratively make modifications, ensuring it does not break the learning process
